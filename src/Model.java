@@ -1,6 +1,3 @@
-package src;
-
-
 public class Model {
 	public State currentState;
 	public enum Policy {NS, EW};
@@ -16,7 +13,7 @@ public class Model {
 	public State getNextState(Policy[][] policy){
 		State newState = currentState.copyState();
 		for(int i = 0; i < policy.length ; i ++){
-			for(int j = 0; i < policy[0].length ; i ++){
+			for(int j = 0; j < policy[0].length ; j ++){
 				//TODO: apply policy to each intersection of 
 			}
 		}
