@@ -6,11 +6,15 @@ public class State {
 	int turn;
 	Intersection[][] grid;
 	
+	public State(int i){
+		this.turn = i;
+	}
 	
-
-	//TODO: build the grid 
-	public Intersection[][] buildGrid(){
-		return null;
+	/**
+	 * Displays the current state with number of cars on each intersection and street directions
+	 */
+	public void printState(){
+		
 	}
 	
 	//TODO: see if useful
@@ -30,9 +34,13 @@ public class State {
 			return null;
 		}	
 	}
-	
+	/**
+	 * Changes car count and updates the reward
+	 * @param increment
+	 */
 	public void increaseCount(int increment){
 		carCount += increment;
+		reward = - carCount;
 	}
 }
 	
