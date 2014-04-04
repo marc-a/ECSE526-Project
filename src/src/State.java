@@ -1,25 +1,11 @@
 package src;
 
 public class State {
-	double reward;
 	int carCount;
-	int turn;
 	Intersection[][] grid;
 	
-	public State(int i){
-		this.turn = i;
-	}
-	
-	/**
-	 * Displays the current state with number of cars on each intersection and street directions
-	 */
-	public void printState(){
-		
-	}
-	
-	//TODO: see if useful
-	public void setReward(int r){
-		this.reward = r;
+	public State(int width, int height){
+		grid = new Intersection[width][height];
 	}
 	
 	/**
@@ -27,20 +13,31 @@ public class State {
 	 * @return a copy of the state
 	 */
 	public State copyState(){
-		try {
-			return (State) this.clone(); //TODO: make sure that this copies every Intersection in grid
-		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
-			return null;
-		}	
+		State newState = new State(this.grid.length, this.grid[0].length);
+		newState.carCount = this.carCount;
+		newState.grid = this.copyGrid();
+		return newState;
 	}
+	
+	public Intersection[][] copyGrid(){
+		Intersection[][] newGrid = new Intersection[this.grid.length][this.grid[0].length];
+		for(int i = 0; i < newGrid.length; i++){
+			for(int j = 0; j < newGrid.length; j++){
+				newGrid[i][j] = new Intersection(i, j, this.grid[i][j].NScars, this.grid[i][j].EWcars);
+				newGrid[i][j].isInput = this.grid[i][j].isInput;
+				newGrid[i][j].isOutput = this.grid[i][j].isOutput;
+			}
+		}
+		return newGrid;
+	}
+	
+	
 	/**
 	 * Changes car count and updates the reward
 	 * @param increment
 	 */
 	public void increaseCount(int increment){
 		carCount += increment;
-		reward = - carCount;
 	}
 }
 	
