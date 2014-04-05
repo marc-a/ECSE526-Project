@@ -12,7 +12,7 @@ public class Model {
 	static final double TURN_PROB = 0.1;
 	static final int MAX_CAR_STREET = 10;
 	static final int MAX_CAR_PASS = 5;
-	static final int MAX_CAR_IN = 5; //check relevance
+	static final int MAX_CAR_IN = 2; //check relevance
 
 	/**
 	 * Builds initial state and assigns it to currentState 
@@ -31,7 +31,7 @@ public class Model {
 				if(x == 0 && EWDir[y] == Direction.E ||  x == s.grid.length - 1 && EWDir[y] == Direction.W  ){
 					s.grid[x][y].isEWInput = true;
 				}
-				if(y == 0 && NSDir[x] == Direction.S || y == s.grid[0].length - 1 && EWDir[x] == Direction.N){
+				if(y == 0 && NSDir[x] == Direction.S || y == s.grid[0].length - 1 && NSDir[x] == Direction.N){
 					s.grid[x][y].isNSInput = true;
 				}
 			}
@@ -112,21 +112,28 @@ public class Model {
 		return newState;
 	}
 
+	
 	/**
 	 * Applies car inputs to the state according to chosen distribution policy
 	 * @param s
 	 */
 	private static void inputCars(State s){
 		int inputCount = 0;
+		int input = 0;
 		for(int i = 0; i < s.grid.length ; i ++){
 			for(int j = 0; j < s.grid[0].length ; j ++){
 				if(s.grid[i][j].isNSInput){					
 					//TODO: add input policy by looping through all input intersections
-					s.grid[i][j].NScars += (int)Math.random()*MAX_CAR_IN;
+					input =  (int)(Math.random()*MAX_CAR_IN);
+					s.grid[i][j].NScars += input;
+					System.out.println("cars in from NS (" + i + "," + j +") is " + input);
 				}
 				if(s.grid[i][j].isEWInput){					
 					//TODO: add input policy by looping through all input intersections
-					s.grid[i][j].EWcars += (int)Math.random()*MAX_CAR_IN;
+
+					input = (int)(Math.random()*MAX_CAR_IN);
+					s.grid[i][j].EWcars += input;
+					System.out.println("cars in from EW (" + i + "," + j +") is " + input);
 				}
 			}
 		}
@@ -209,6 +216,15 @@ public class Model {
 		boolean[][] NSGreen2 = {{false, false}, {false, false}};
 		currentState = getNextState(currentState, NSGreen2);
 		printState(currentState);
+		inputCars(currentState);
+		printState(currentState);
+		inputCars(currentState);
+		printState(currentState);
+		inputCars(currentState);
+		printState(currentState);
+		inputCars(currentState);
+		printState(currentState);
+
 	}
 	
 	public int  getWidth(){

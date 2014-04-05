@@ -4,14 +4,14 @@ import src.Model.Policy;
 
 public class Agent {
 	int turn = 0, totalReward = 0;
-	final int CLUSTER_COUNT = 20;
+	final int CLUSTER_COUNT = 200;
 	final int MAX_ITERATION = 2000;
 	
 	int policyCount;
 	State[] centroids = new State[CLUSTER_COUNT]; // the list of centroid for each cluster
 	int[] stateCount = new int[CLUSTER_COUNT]; // number of state subscribed to each cluster
 	double[][] QValues; // 
-	boolean[][][] policies = {{{false, false}, {false, false}},{{false, false}, {false, true}},{{false, false}, {true, false}},{{false, false}, {true, true}}, {{false, true}, {false, false}},{{false, true}, {false, true}},{{false, true}, {true, false}},{{false, true}, {true, true}},{{true, false}, {false, false}},{{true, false}, {true, false}},{{true, false}, {true, true}},{{true, true}, {false, false}},{{true, true}, {false, true}},{{true, true}, {true, false}},{{true, true}, {true, true}}};
+	boolean[][][] policies = {{{false, false}, {false, false}},{{false, false}, {false, true}},{{false, false}, {true, false}},{{false, false}, {true, true}}, {{false, true}, {false, false}},{{false, true}, {false, true}},{{false, true}, {true, false}},{{false, true}, {true, true}},{{true, false}, {false, false}},{{true, false}, {false, true}},{{true, false}, {true, false}},{{true, false}, {true, true}},{{true, true}, {false, false}},{{true, true}, {false, true}},{{true, true}, {true, false}},{{true, true}, {true, true}}};
 	
 	int width, height;
 	final double EPS = 0.9, BETA = 0.1, GAMMA = 0.05; //TODO: review these values
@@ -46,9 +46,9 @@ public class Agent {
 			int index = 0;
 			int currentCluster = getBestClusterIndex(model.currentState);
 			//Choose the desired policy
-			if(Math.random() < EPS){//Be greedy and choose the optimal policy //TODO: decrease exploration with time
+			if(Math.random() < 1 - (EPS - (double)turn/(double)MAX_ITERATION*EPS)){//Be greedy and choose the optimal policy and decrease exploration with time
 				
-				double maxValue = 0;
+				double maxValue = Double.NEGATIVE_INFINITY; //TODO: review why i could have wanted to make it 0 instead
 				for(int j = 0; j < QValues.length; j++){
 					if(QValues[j][currentCluster] > maxValue){
 						maxValue = QValues[j][currentCluster];
@@ -56,7 +56,8 @@ public class Agent {
 					}
 				}
 			}else{//Explore and choose a random action
-				index = (int)Math.random()*policyCount;
+				double temp =  Math.random();
+				index = (int)(temp*policyCount);
 			}
 			// Extract the selected policy given the selection index
 			nextNSGreen = policies[index];
@@ -161,7 +162,8 @@ public class Agent {
 
 	public static void main(String[] args){
 		Agent agent = new Agent();
-		agent.testCentroidUpdate();
+	//	agent.testCentroidUpdate();
+	//	agent.doNaiveStrategy();
 		agent.doQLearning();
 	}
 	//TODO: make this scalable in the future
