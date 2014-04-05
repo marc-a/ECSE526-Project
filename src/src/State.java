@@ -1,8 +1,10 @@
 package src;
 
+//TODO: consider making subclass with cars as double for centroids
 public class State {
-	int carCount;
+	int carCount; //TODO: see if this is relevant, being updated
 	Intersection[][] grid;
+	int reward = 0;
 	
 	public State(int width, int height){
 		grid = new Intersection[width][height];
@@ -24,8 +26,8 @@ public class State {
 		for(int i = 0; i < newGrid.length; i++){
 			for(int j = 0; j < newGrid.length; j++){
 				newGrid[i][j] = new Intersection(i, j, this.grid[i][j].NScars, this.grid[i][j].EWcars);
-				newGrid[i][j].isInput = this.grid[i][j].isInput;
-				newGrid[i][j].isOutput = this.grid[i][j].isOutput;
+				newGrid[i][j].isNSInput = this.grid[i][j].isNSInput;
+				newGrid[i][j].isEWInput = this.grid[i][j].isEWInput;
 			}
 		}
 		return newGrid;

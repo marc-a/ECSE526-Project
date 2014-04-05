@@ -12,11 +12,12 @@ public class Model {
 	static final double TURN_PROB = 0.1;
 	static final int MAX_CAR_STREET = 10;
 	static final int MAX_CAR_PASS = 5;
+	static final int MAX_CAR_IN = 5; //check relevance
 
 	/**
 	 * Builds initial state and assigns it to currentState 
 	 */
-	public void buildState(){
+	public State buildState(){
 		//TODO: write this
 		int NScars, EWcars;
 		State s = new State(2, 2);
@@ -27,15 +28,15 @@ public class Model {
 				s.grid[x][y] = new Intersection(x, y, NScars, EWcars);
 				s.increaseCount(NScars + EWcars);
 				//TODO: check if below conditions are true for input/output node
-				if(x == 0 && EWDir[y] == Direction.W || y == 0 && NSDir[x] == Direction.N || x == s.grid.length - 1 && EWDir[y] == Direction.E || y == s.grid[0].length - 1 && EWDir[x] == Direction.S){
-					//TODO: differentiate between NSOutput and EWOutput
-					s.grid[x][y].isOutput = true;
-				}else if(x == 0 && EWDir[y] == Direction.E || y == 0 && NSDir[x] == Direction.S || x == s.grid.length - 1 && EWDir[y] == Direction.W || y == s.grid[0].length - 1 && EWDir[x] == Direction.N){
-					s.grid[x][y].isInput = true;
+				if(x == 0 && EWDir[y] == Direction.E ||  x == s.grid.length - 1 && EWDir[y] == Direction.W  ){
+					s.grid[x][y].isEWInput = true;
+				}
+				if(y == 0 && NSDir[x] == Direction.S || y == s.grid[0].length - 1 && EWDir[x] == Direction.N){
+					s.grid[x][y].isNSInput = true;
 				}
 			}
 		}
-		currentState = s;
+		return s;
 	}
 
 	/**
@@ -105,8 +106,9 @@ public class Model {
 			}
 		}
 		// input cars into this next state
-//	inputCars(newState); //TODO: uncomment this
+		inputCars(newState); //TODO: uncomment this
 		System.out.println("Cars Cleared = " + carsCleared);
+		newState.reward = carsCleared;
 		return newState;
 	}
 
@@ -118,8 +120,13 @@ public class Model {
 		int inputCount = 0;
 		for(int i = 0; i < s.grid.length ; i ++){
 			for(int j = 0; j < s.grid[0].length ; j ++){
-				if(s.grid[i][j].isInput){					
+				if(s.grid[i][j].isNSInput){					
 					//TODO: add input policy by looping through all input intersections
+					s.grid[i][j].NScars += (int)Math.random()*MAX_CAR_IN;
+				}
+				if(s.grid[i][j].isEWInput){					
+					//TODO: add input policy by looping through all input intersections
+					s.grid[i][j].EWcars += (int)Math.random()*MAX_CAR_IN;
 				}
 			}
 		}
@@ -194,7 +201,7 @@ public class Model {
 		System.out.println("=======Testing getNextState()=========");
 		System.out.println("output: 1)" + generateCars() + " 2)" + generateCars() + " 3)" + generateCars());
 
-		buildState();
+		currentState = buildState();
 		printState(currentState);
 		boolean[][] NSGreen1 = {{true, true}, {true, true}};
 		currentState = getNextState(currentState, NSGreen1);
