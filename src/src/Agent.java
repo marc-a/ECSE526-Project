@@ -108,6 +108,7 @@ public class Agent {
 		int index = 0;
 		//TODO: check that this is done right
 		for(int k = 0 ; k < centroids.length; k++){
+			distance = 0;
 			for(int i = 0; i < width ; i++){
 				for(int j = 0; j < height ; j++){
 					distance += Math.pow(s.grid[i][j].NScars, 2) - Math.pow(centroids[k].grid[i][j].NScars, 2);
@@ -161,10 +162,16 @@ public class Agent {
 
 
 	public static void main(String[] args){
-		Agent agent = new Agent();
+		Agent agent1 = new Agent();
 	//	agent.testCentroidUpdate();
 	//	agent.doNaiveStrategy();
-		agent.doQLearning();
+		agent1.doQLearning();
+		
+		Agent agent2 = new Agent();
+		//	agent.testCentroidUpdate();
+		agent2.doNaiveStrategy();
+		System.out.println("Total Q reward is " + agent1.totalReward);
+		System.out.println("Total naive reward is " + agent2.totalReward);
 	}
 	//TODO: make this scalable in the future
 	public void populatePolcies(){

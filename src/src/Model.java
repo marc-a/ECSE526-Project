@@ -10,9 +10,9 @@ public class Model {
 	public static Direction[] EWDir = {Direction.E, Direction.W};	
 
 	static final double TURN_PROB = 0.1;
-	static final int MAX_CAR_STREET = 10;
+	static final int MAX_CAR_STREET = 15;
 	static final int MAX_CAR_PASS = 5;
-	static final int MAX_CAR_IN = 2; //check relevance
+	static final int MAX_CAR_IN = 4; //check relevance
 
 	/**
 	 * Builds initial state and assigns it to currentState 
