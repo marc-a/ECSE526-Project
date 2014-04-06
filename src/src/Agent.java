@@ -111,8 +111,8 @@ public class Agent {
 			distance = 0;
 			for(int i = 0; i < width ; i++){
 				for(int j = 0; j < height ; j++){
-					distance += Math.pow(s.grid[i][j].NScars, 2) - Math.pow(centroids[k].grid[i][j].NScars, 2);
-					distance += Math.pow(s.grid[i][j].EWcars, 2) - Math.pow(centroids[k].grid[i][j].EWcars, 2);
+					distance += Math.pow(s.grid[i][j].NScars - centroids[k].grid[i][j].NScars, 2);
+					distance += Math.pow(s.grid[i][j].EWcars - centroids[k].grid[i][j].EWcars, 2);
 				}
 			}
 			if(distance < minDistance){
