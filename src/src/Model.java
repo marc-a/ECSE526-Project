@@ -10,9 +10,9 @@ public class Model {
 	public static Direction[] EWDir = {Direction.E, Direction.W};	
 
 	static final double TURN_PROB = 0.1;
-	static final int MAX_CAR_STREET = 15;
-	static final int MAX_CAR_PASS = 5;
-	static final int MAX_CAR_IN = 4; //check relevance
+	static final int MAX_CAR_STREET = 30;
+	static final int MAX_CAR_PASS = 8;
+	static final int MAX_CAR_IN = 5; //check relevance
 
 	/**
 	 * Builds initial state and assigns it to currentState 
@@ -46,69 +46,118 @@ public class Model {
 	 */
 	public static State getNextState(State s, boolean[][] NSGreen){
 		State newState = s.copyState(); //TODO: test out copy
-		int carsPassed, carsTurned, carsCleared = 0;
+		int carsPassed, carsTurned, carsFwd, maxFwd, maxTurned, maxPassed, carsCleared = 0;
 		for(int i = 0; i < NSGreen.length ; i++){
 			for(int j = 0; j < NSGreen[0].length ; j++){
 				//Apply policy to each intersection of
 				carsTurned = 0;
 				carsPassed = 0;
+				carsFwd = 0;
+				maxFwd = 0;
+				maxTurned = 0;
+				maxPassed = 0;
 				if(NSGreen[i][j] == true){
 					//decrement car count
-					carsPassed = Math.min(s.grid[i][j].NScars, MAX_CAR_PASS);
-					newState.grid[i][j].NScars -= carsPassed; 
+					maxPassed = Math.min(s.grid[i][j].NScars, MAX_CAR_PASS);
+					
 					//Apply changes to adjacent intersection as fit/decrement state carCount
-					for(int k = 0; k <= carsPassed; k++){
+					for(int k = 0; k < maxPassed; k++){
 						if(Math.random() < TURN_PROB){ //TODO: check that this gives right distribution
-							carsTurned++;
+							maxTurned++;
 						}
 					}
-					System.out.println("cars turned for (" + i + "," + j + ") is " + carsTurned );//TODO: remove this
+					maxFwd = maxPassed - maxTurned;
 					//Apply change to adjacent intersections according to direction TODO: check if these are correct
 					if(NSDir[i] == Direction.N){
-						if(j > 0)	newState.grid[i][j - 1].NScars += carsPassed - carsTurned; //TODO: add car removal
-						else carsCleared += carsPassed - carsTurned;
+						if(j > 0){
+							carsFwd = Math.min(MAX_CAR_STREET - s.grid[i][j - 1].NScars, maxFwd);
+							newState.grid[i][j - 1].NScars += carsFwd; //TODO: add car removal
+						}else{
+							carsFwd = maxFwd;
+							carsCleared += maxFwd;
+						}
 					}else if(NSDir[i] == Direction.S){
-						if(j < newState.grid[0].length - 1) newState.grid[i][j + 1].NScars += carsPassed - carsTurned;
-						else carsCleared += carsPassed - carsTurned;
-					}
-					if(EWDir[j] == Direction.E){
-						if(i < newState.grid[0].length  - 1) newState.grid[i + 1][j].EWcars += carsTurned;
-						else carsCleared += carsTurned;
-					}else if(EWDir[j] == Direction.W){
-						if(i > 0) newState.grid[i - 1][j].EWcars += carsTurned;
-						else carsCleared += carsTurned;
-					}
-				}else{
-					//Apply changes to adjacent intersection as fit/decrement state carCount
-					carsPassed = Math.min(s.grid[i][j].EWcars, MAX_CAR_PASS);
-					newState.grid[i][j].EWcars -= carsPassed;
-					for(int k = 0; k <= carsPassed; k++){
-						if(Math.random() < TURN_PROB){ //TODO: check that this gives right distribution
-							carsTurned++;
+						if(j < newState.grid[0].length - 1){
+							carsFwd =  Math.min(MAX_CAR_STREET - s.grid[i][j + 1].NScars, maxFwd);
+							newState.grid[i][j + 1].NScars += carsFwd;
+						}else{
+							carsFwd = maxFwd;
+							carsCleared += maxFwd;
 						}
 					}
-					System.out.println("cars turned for (" + i + "," + j + ") is " + carsTurned );//TODO: remove this
-					if(NSDir[i] == Direction.N){ //TODO: the turning car should appear at the next intersection depending on the direction of the perpendicular
-						if(j > 0) newState.grid[i][j - 1].NScars += carsTurned;
-						else carsCleared += carsTurned;
+					if(EWDir[j] == Direction.E){
+						if(i < newState.grid[0].length  - 1){
+							carsTurned = Math.min(MAX_CAR_STREET - s.grid[i + 1][j].EWcars, maxTurned);
+							newState.grid[i + 1][j].EWcars += carsTurned;
+						}else{
+							carsTurned = maxTurned;
+							carsCleared += maxTurned;
+						}
+					}else if(EWDir[j] == Direction.W){
+						if(i > 0){
+							carsTurned = Math.min(MAX_CAR_STREET - s.grid[i - 1][j].EWcars, maxTurned);
+							newState.grid[i - 1][j].EWcars += carsTurned;
+						}else{
+							carsTurned = maxTurned;
+							carsCleared += carsTurned;
+						}
+					}
+					carsPassed = carsTurned + carsFwd;
+					System.out.println("For (" + i + "," + j + ") is " + carsTurned + " cars turned EW, " + carsFwd + " went forward NS. " + carsPassed + " passed in total.");//TODO: remove this
+					newState.grid[i][j].NScars -= carsPassed; 
+				}else{
+					//Apply changes to adjacent intersection as fit/decrement state carCount
+					maxPassed = Math.min(s.grid[i][j].EWcars, MAX_CAR_PASS);
+					for(int k = 0; k < maxPassed; k++){
+						if(Math.random() < TURN_PROB){ //TODO: check that this gives right distribution
+							maxTurned++;
+						}
+					}
+					maxFwd = maxPassed - maxTurned;
+					if(NSDir[i] == Direction.N){ //the turning car should appear at the next intersection depending on the direction of the perpendicular
+						if(j > 0){
+							carsTurned = Math.min(MAX_CAR_STREET - s.grid[i][j - 1].NScars, maxTurned);
+							newState.grid[i][j - 1].NScars += carsTurned;
+						}else{
+							carsCleared += maxTurned;
+							carsTurned = maxTurned;
+						}
 					}else if(NSDir[i] == Direction.S ){
-						if(j < newState.grid[0].length - 1) newState.grid[i][j + 1].NScars += carsTurned;
-						else carsCleared += carsTurned;
+						if(j < newState.grid[0].length - 1){
+							carsTurned = Math.min(MAX_CAR_STREET - s.grid[i][j + 1].NScars, maxTurned);
+							newState.grid[i][j + 1].NScars += carsTurned;
+						}else{
+							carsCleared += maxTurned;
+							carsTurned = maxTurned;
+						}
 					}
 					if(EWDir[j] == Direction.E ){
-						if(i < newState.grid[0].length  - 1) newState.grid[i + 1][j].EWcars += carsPassed - carsTurned;
-						else carsCleared += carsPassed - carsTurned;
+						if(i < newState.grid[0].length  - 1){
+							carsFwd = Math.min(MAX_CAR_STREET - s.grid[i + 1][j].EWcars, maxFwd);//TODO: check this
+							newState.grid[i + 1][j].EWcars += carsFwd;
+						}else{
+							carsFwd = maxFwd;
+							carsCleared += maxFwd;
+						}
 					}else if( EWDir[j] == Direction.W){
-						if(i > 0) newState.grid[i - 1][j].EWcars += carsPassed - carsTurned;
-						else carsCleared += carsPassed - carsTurned;
+						if(i > 0){
+							carsFwd = Math.min(MAX_CAR_STREET - s.grid[i - 1][j].EWcars, maxFwd);//TODO: check this
+							newState.grid[i - 1][j].EWcars += carsFwd;
+						}else{
+							carsFwd = maxFwd;
+							carsCleared += maxFwd;
+						}
 					}
+					carsPassed = carsFwd + carsTurned;
+					System.out.println("For (" + i + "," + j + ") is " + carsTurned + " cars turned NS, " + carsFwd + " went forward EW. " + carsPassed + " passed in total.");//TODO: remove this//TODO: remove this
+					newState.grid[i][j].EWcars -= carsPassed;
 				}
 			}
 		}
-		// input cars into this next state
-		inputCars(newState); //TODO: uncomment this
 		System.out.println("Cars Cleared = " + carsCleared);
 		newState.reward = carsCleared;
+		// input cars into this next state and decrement reward by input failures
+		inputCars(newState); 
 		return newState;
 	}
 
@@ -119,21 +168,24 @@ public class Model {
 	 */
 	private static void inputCars(State s){
 		int inputCount = 0;
-		int input = 0;
+		int input = 0, maxInput;
 		for(int i = 0; i < s.grid.length ; i ++){
 			for(int j = 0; j < s.grid[0].length ; j ++){
 				if(s.grid[i][j].isNSInput){					
-					//TODO: add input policy by looping through all input intersections
-					input =  (int)(Math.random()*MAX_CAR_IN);
+					maxInput =  (int)(Math.random()*(MAX_CAR_IN )); //TODO: refine this
+					input = Math.min(MAX_CAR_STREET - s.grid[i][j].NScars, maxInput);
 					s.grid[i][j].NScars += input;
-					System.out.println("cars in from NS (" + i + "," + j +") is " + input);
+					//decrement reward according to number of cars denied
+					s.reward -= maxInput - input;
+					System.out.println("cars in from NS (" + i + "," + j +") is " + input + " and reward was brought down by " + (maxInput - input));
 				}
 				if(s.grid[i][j].isEWInput){					
-					//TODO: add input policy by looping through all input intersections
-
-					input = (int)(Math.random()*MAX_CAR_IN);
+					maxInput = (int)(Math.random()*MAX_CAR_IN + 2);
+					input = Math.min(MAX_CAR_STREET - s.grid[i][j].EWcars, maxInput);
 					s.grid[i][j].EWcars += input;
-					System.out.println("cars in from EW (" + i + "," + j +") is " + input);
+					//decrement reward according to number of cars denied
+					s.reward -= maxInput - input;
+					System.out.println("cars in from EW (" + i + "," + j +") is " + input + " and reward was brought down by " + (maxInput - input));
 				}
 			}
 		}
@@ -205,9 +257,9 @@ public class Model {
 		System.out.println("output: 1)" + generateCars() + " 2)" + generateCars() + " 3)" + generateCars());
 
 
-		System.out.println("=======Testing getNextState()=========");
 		System.out.println("output: 1)" + generateCars() + " 2)" + generateCars() + " 3)" + generateCars());
 
+		System.out.println("=======Testing getNextState()=========");
 		currentState = buildState();
 		printState(currentState);
 		boolean[][] NSGreen1 = {{true, true}, {true, true}};

@@ -4,51 +4,57 @@ import src.Model.Policy;
 
 public class Agent {
 	int turn = 0, totalReward = 0;
+	double averageReward = 0;
 	final int CLUSTER_COUNT = 200;
-	final int MAX_ITERATION = 2000;
-	
+	final int MAX_ITERATION = 10000;
+	final int AVG_WINDOW_SIZE = 50;
+
 	int policyCount;
 	State[] centroids = new State[CLUSTER_COUNT]; // the list of centroid for each cluster
 	int[] stateCount = new int[CLUSTER_COUNT]; // number of state subscribed to each cluster
 	double[][] QValues; // 
+	int[][] QVisitCount; //How many times has each QValue been visited
 	boolean[][][] policies = {{{false, false}, {false, false}},{{false, false}, {false, true}},{{false, false}, {true, false}},{{false, false}, {true, true}}, {{false, true}, {false, false}},{{false, true}, {false, true}},{{false, true}, {true, false}},{{false, true}, {true, true}},{{true, false}, {false, false}},{{true, false}, {false, true}},{{true, false}, {true, false}},{{true, false}, {true, true}},{{true, true}, {false, false}},{{true, true}, {false, true}},{{true, true}, {true, false}},{{true, true}, {true, true}}};
-	
+
 	int width, height;
-	final double EPS = 0.9, BETA = 0.1, GAMMA = 0.05; //TODO: review these values
-	
+	final double EPS = 0.9, BETA = 0.5, GAMMA = 0.7; //TODO: review these values
+
 	Model model;
-	
+
 
 	public Agent(){
 		model = new Model();
 		model.currentState = model.buildState();
-		
+
 		width = model.getWidth();
 		height = model.getHeight();
-		
-		this.policyCount = (int)Math.pow(2, width*height);
-		
-		QValues = new double[policyCount][CLUSTER_COUNT];
-		System.out.println("number of policies = " + policies.length); //TODO: do this
 
+		this.policyCount = (int)Math.pow(2, width*height);
+
+		QValues = new double[policyCount][CLUSTER_COUNT];
 	}
 
-	
+
+	private void updateAvgReward(int r){
+		double temp = averageReward*Math.min(turn, AVG_WINDOW_SIZE) + r;
+		averageReward = (temp/ (Math.min(turn,  AVG_WINDOW_SIZE ) + 1));
+	}
+
 	public void doQLearning(){
 		//initialise clusters
 		for(int i = 0; i < centroids.length ; i++){
 			centroids[i] = model.buildState();
 			stateCount[i] = 0;
 		}
-		
+
 		for( turn = 0; turn < MAX_ITERATION; turn ++){
 			boolean[][] nextNSGreen = new boolean[width][height];
 			int index = 0;
 			int currentCluster = getBestClusterIndex(model.currentState);
 			//Choose the desired policy
 			if(Math.random() < 1 - (EPS - (double)turn/(double)MAX_ITERATION*EPS)){//Be greedy and choose the optimal policy and decrease exploration with time
-				
-				double maxValue = Double.NEGATIVE_INFINITY; //TODO: review why i could have wanted to make it 0 instead
+
+				double maxValue = Double.NEGATIVE_INFINITY;
 				for(int j = 0; j < QValues.length; j++){
 					if(QValues[j][currentCluster] > maxValue){
 						maxValue = QValues[j][currentCluster];
@@ -64,27 +70,32 @@ public class Agent {
 			State nextState = Model.getNextState(model.currentState, nextNSGreen);
 			int nextCluster = getBestClusterIndex(nextState);
 			double optimalNextValue = 0;
-			
+
 			// Get the best Qvalue given the next state
 			for(int j = 0; j < QValues.length; j++){
 				if(QValues[j][nextCluster] > optimalNextValue){
 					optimalNextValue = QValues[j][nextCluster];
 				}
 			}
-			//Add the reward to the total reward 
-			totalReward += nextState.reward;
+			//Add the reward to the total reward and update average reward
+			totalReward += nextState.reward;				
+			updateAvgReward(nextState.reward);
+			
 			
 			//Update QValue for the current state
+	//		QVisitCount[index][currentCluster]++;
 			QValues[index][currentCluster] += BETA*(nextState.reward + GAMMA*optimalNextValue - QValues[index][currentCluster]);
-			
+
 			//Update currentState and clusters
 			model.currentState = nextState;
-			Model.printState(model.currentState);
-			updateCluster(nextState, nextCluster);
+	//		Model.printState(model.currentState);
 			
+			System.out.println(""   + averageReward);
+			updateCluster(nextState, nextCluster);
 		}
+		System.out.println("======================");
 	}
-	
+
 	private void updateCluster(State newState, int clusterIndex){
 		int count = stateCount[clusterIndex];
 		if(count == 0){
@@ -122,9 +133,9 @@ public class Agent {
 		}
 		return index;
 	}
-	
+
 	//TODO: make this scalable
-	public void doNaiveStrategy(){
+	public void doIntuitiveStrategy(){
 		for(turn = 0; turn < MAX_ITERATION; turn++){
 			State nextState;
 			if(turn % 2 == 0){
@@ -137,13 +148,35 @@ public class Agent {
 			}
 			//Add the reward to the total reward 
 			totalReward += nextState.reward;
+			updateAvgReward(nextState.reward);
 			
+
+			//Update currentState
+			model.currentState = nextState;
+			Model.printState(model.currentState);
+	//		System.out.println(""   + averageReward);
+		}
+		
+		System.out.println("=========================================");
+	}
+
+
+	public void doRandomStrategy(){
+		for(turn = 0; turn < MAX_ITERATION; turn++){
+			State nextState;
+			double temp =  Math.random();
+			int index = (int)(temp*policyCount);
+			boolean[][] NSGreen = policies[index]; 
+			nextState = Model.getNextState(model.currentState, NSGreen);
+			//Add the reward to the total reward 
+			totalReward += nextState.reward;
+
 			//Update currentState
 			model.currentState = nextState;
 			Model.printState(model.currentState);
 		}
 	}
-	
+
 	public void testCentroidUpdate(){
 		centroids[0] = model.buildState();
 		State testState  = model.buildState();
@@ -157,25 +190,28 @@ public class Agent {
 		updateCluster(testState, 0);
 		testState = model.buildState();
 		System.out.println("centroid is at " + centroids[0].grid[0][0].NScars + " with " + stateCount[0] + " states and testState is at " + testState.grid[0][0].NScars);
-		
+
 	}
 
 
 	public static void main(String[] args){
 		Agent agent1 = new Agent();
-	//	agent.testCentroidUpdate();
-	//	agent.doNaiveStrategy();
-		agent1.doQLearning();
-		
 		Agent agent2 = new Agent();
+		Agent agent3 = new Agent();
 		//	agent.testCentroidUpdate();
-		agent2.doNaiveStrategy();
+		agent2.doIntuitiveStrategy();
+		agent1.doQLearning();
+		agent3.doRandomStrategy();
+		//	agent.testCentroidUpdate();
+		//	agent.doNaiveStrategy();
+
 		System.out.println("Total Q reward is " + agent1.totalReward);
-		System.out.println("Total naive reward is " + agent2.totalReward);
+		System.out.println("Total intuitive reward is " + agent2.totalReward);
+		System.out.println("Total random reward is " + agent3.totalReward);
 	}
 	//TODO: make this scalable in the future
 	public void populatePolcies(){
-	/*	policies = new boolean[policyCount][width][height];
+		/*	policies = new boolean[policyCount][width][height];
 		for(int k = 0; k < policyCount; k ++){
 			for(int i = 0; i < width; i++){
 				for(int j = 0; j < height ; j++){
@@ -183,8 +219,8 @@ public class Agent {
 				}
 			}
 		}
-		
-		*/
+
+		 */
 	}
 
 }
