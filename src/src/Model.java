@@ -1,5 +1,7 @@
 package src;
 
+import org.apache.commons.math3.distribution.PoissonDistribution;
+
 
 public class Model {
 	public State currentState;
@@ -10,9 +12,9 @@ public class Model {
 	public static Direction[] EWDir = {Direction.E, Direction.W};	
 
 	static final double TURN_PROB = 0.1;
-	static final int MAX_CAR_STREET = 30;
-	static final int MAX_CAR_PASS = 8;
-	static final int MAX_CAR_IN = 5; //check relevance
+	static final int MAX_CAR_STREET = 20;
+	static final int MAX_CAR_PASS = 5;
+	static final int MAX_CAR_IN = 3; //check relevance
 
 	/**
 	 * Builds initial state and assigns it to currentState 
@@ -39,6 +41,29 @@ public class Model {
 		return s;
 	}
 
+	public State buildCentroidState(){
+		//TODO: write this
+		int NScars, EWcars;
+		State s = new State(2, 2);
+		for(int x = 0; x < s.grid.length ; x ++){
+			for(int y = 0; y < s.grid[0].length ; y ++){
+				NScars = generateCars();
+				EWcars = generateCars();
+				s.grid[x][y] = new Intersection(x, y, NScars, EWcars);
+				s.increaseCount(NScars + EWcars);
+				//TODO: check if below conditions are true for input/output node
+				if(x == 0 && EWDir[y] == Direction.E ||  x == s.grid.length - 1 && EWDir[y] == Direction.W  ){
+					s.grid[x][y].isEWInput = true;
+				}
+				if(y == 0 && NSDir[x] == Direction.S || y == s.grid[0].length - 1 && NSDir[x] == Direction.N){
+					s.grid[x][y].isNSInput = true;
+				}
+				if(s.grid[x][y].isNSInput) s.grid[x][y].NScars = generateCentroidCars();
+				if(s.grid[x][y].isEWInput) s.grid[x][y].EWcars = generateCentroidCars();
+			}
+		}
+		return s;
+	}
 	/**
 	 * @param s starting state
 	 * @param NSGreen policy applied to the state s: true if this intersection Green on the NS line
@@ -169,10 +194,13 @@ public class Model {
 	private static void inputCars(State s){
 		int inputCount = 0;
 		int input = 0, maxInput;
+		PoissonDistribution p1 = new PoissonDistribution(MAX_CAR_IN*3/4);
+		PoissonDistribution p2 = new PoissonDistribution(MAX_CAR_IN*1/2);
 		for(int i = 0; i < s.grid.length ; i ++){
 			for(int j = 0; j < s.grid[0].length ; j ++){
 				if(s.grid[i][j].isNSInput){					
 					maxInput =  (int)(Math.random()*(MAX_CAR_IN )); //TODO: refine this
+			//		maxInput = Math.min(p1.sample(), MAX_CAR_IN);
 					input = Math.min(MAX_CAR_STREET - s.grid[i][j].NScars, maxInput);
 					s.grid[i][j].NScars += input;
 					//decrement reward according to number of cars denied
@@ -181,6 +209,7 @@ public class Model {
 				}
 				if(s.grid[i][j].isEWInput){					
 					maxInput = (int)(Math.random()*MAX_CAR_IN + 2);
+			//		maxInput = Math.min(p2.sample(), MAX_CAR_IN);
 					input = Math.min(MAX_CAR_STREET - s.grid[i][j].EWcars, maxInput);
 					s.grid[i][j].EWcars += input;
 					//decrement reward according to number of cars denied
@@ -199,10 +228,20 @@ public class Model {
 	 * @return
 	 */
 	private int generateCars(){
-		int carCount = (int)( (MAX_CAR_STREET + 1)*Math.random());
+		int carCount = (int)( (MAX_CAR_STREET)*Math.random());
 		return carCount;
 	}
 
+	/**
+	 * Used to generate centroids with higher likelyhood of max car counts, since these state are more likely to appear 
+	 * @return
+	 */
+	private int generateCentroidCars(){
+		int carCount = (int)( (MAX_CAR_STREET + 3)*Math.random());
+		if(carCount > MAX_CAR_STREET) carCount = MAX_CAR_STREET;
+		return carCount;
+	}
+	
 	public static void printState(State s){
 		int line = 2, column = 0, j = -1;
 		boolean isHorStreet;

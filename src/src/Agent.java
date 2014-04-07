@@ -1,14 +1,18 @@
 package src;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+
 import src.Model.Policy;
 
 public class Agent {
 	int turn = 0, totalReward = 0;
 	double averageReward = 0;
-	final int CLUSTER_COUNT = 200;
-	final int MAX_ITERATION = 10000;
+	final int CLUSTER_COUNT = 7000;
+	final int MAX_ITERATION = 40000;
 	final int AVG_WINDOW_SIZE = 50;
-
+	PrintWriter writer;
 	int policyCount;
 	State[] centroids = new State[CLUSTER_COUNT]; // the list of centroid for each cluster
 	int[] stateCount = new int[CLUSTER_COUNT]; // number of state subscribed to each cluster
@@ -17,13 +21,23 @@ public class Agent {
 	boolean[][][] policies = {{{false, false}, {false, false}},{{false, false}, {false, true}},{{false, false}, {true, false}},{{false, false}, {true, true}}, {{false, true}, {false, false}},{{false, true}, {false, true}},{{false, true}, {true, false}},{{false, true}, {true, true}},{{true, false}, {false, false}},{{true, false}, {false, true}},{{true, false}, {true, false}},{{true, false}, {true, true}},{{true, true}, {false, false}},{{true, true}, {false, true}},{{true, true}, {true, false}},{{true, true}, {true, true}}};
 
 	int width, height;
-	final double EPS = 0.9, BETA = 0.5, GAMMA = 0.7; //TODO: review these values
+	final double EPS = 0.98, BETA = 0.5, GAMMA = 0.7; //TODO: review these values
 
 	Model model;
 
 
-	public Agent(){
+	public Agent(String name){
 		model = new Model();
+		try {
+			writer = new PrintWriter("" + name + ".txt", "UTF-8");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		model.currentState = model.buildState();
 
 		width = model.getWidth();
@@ -43,7 +57,7 @@ public class Agent {
 	public void doQLearning(){
 		//initialise clusters
 		for(int i = 0; i < centroids.length ; i++){
-			centroids[i] = model.buildState();
+			centroids[i] = model.buildCentroidState();
 			stateCount[i] = 0;
 		}
 
@@ -69,8 +83,8 @@ public class Agent {
 			nextNSGreen = policies[index];
 			State nextState = Model.getNextState(model.currentState, nextNSGreen);
 			int nextCluster = getBestClusterIndex(nextState);
-			double optimalNextValue = 0;
-
+			
+			double optimalNextValue = Double.NEGATIVE_INFINITY;
 			// Get the best Qvalue given the next state
 			for(int j = 0; j < QValues.length; j++){
 				if(QValues[j][nextCluster] > optimalNextValue){
@@ -79,7 +93,8 @@ public class Agent {
 			}
 			//Add the reward to the total reward and update average reward
 			totalReward += nextState.reward;				
-			updateAvgReward(nextState.reward);
+//			updateAvgReward(nextState.reward);
+			writer.write("" + nextState.reward + "\n");
 			
 			
 			//Update QValue for the current state
@@ -88,7 +103,7 @@ public class Agent {
 
 			//Update currentState and clusters
 			model.currentState = nextState;
-	//		Model.printState(model.currentState);
+			Model.printState(model.currentState);
 			
 			System.out.println(""   + averageReward);
 			updateCluster(nextState, nextCluster);
@@ -136,6 +151,7 @@ public class Agent {
 
 	//TODO: make this scalable
 	public void doIntuitiveStrategy(){
+		//PoissonDistribution inp;
 		for(turn = 0; turn < MAX_ITERATION; turn++){
 			State nextState;
 			if(turn % 2 == 0){
@@ -144,13 +160,12 @@ public class Agent {
 			}else{
 				boolean[][] NSGreen = {{false, true} , {true, false}};
 				nextState = Model.getNextState(model.currentState, NSGreen);
-
 			}
-			//Add the reward to the total reward 
-			totalReward += nextState.reward;
-			updateAvgReward(nextState.reward);
 			
-
+			//Add the reward to the total reward
+			totalReward += nextState.reward;
+//			updateAvgReward(nextState.reward);
+			writer.write("" + nextState.reward + "\n");
 			//Update currentState
 			model.currentState = nextState;
 			Model.printState(model.currentState);
@@ -170,6 +185,7 @@ public class Agent {
 			nextState = Model.getNextState(model.currentState, NSGreen);
 			//Add the reward to the total reward 
 			totalReward += nextState.reward;
+			writer.write("" + nextState.reward + "\n");
 
 			//Update currentState
 			model.currentState = nextState;
@@ -195,19 +211,22 @@ public class Agent {
 
 
 	public static void main(String[] args){
-		Agent agent1 = new Agent();
-		Agent agent2 = new Agent();
-		Agent agent3 = new Agent();
+		Agent agent1 = new Agent("Qlearning");
+		Agent agent2 = new Agent("Intuitive");
+		Agent agent3 = new Agent("Random");
 		//	agent.testCentroidUpdate();
-		agent2.doIntuitiveStrategy();
 		agent1.doQLearning();
-		agent3.doRandomStrategy();
+		agent2.doIntuitiveStrategy();
+	//	agent3.doRandomStrategy();
 		//	agent.testCentroidUpdate();
 		//	agent.doNaiveStrategy();
 
 		System.out.println("Total Q reward is " + agent1.totalReward);
 		System.out.println("Total intuitive reward is " + agent2.totalReward);
 		System.out.println("Total random reward is " + agent3.totalReward);
+		agent1.writer.close();
+		agent2.writer.close();
+		agent3.writer.close();
 	}
 	//TODO: make this scalable in the future
 	public void populatePolcies(){
