@@ -37,7 +37,7 @@ public class Agent {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		model.currentState = model.buildState();
 
 		width = model.getWidth();
@@ -76,21 +76,15 @@ public class Agent {
 						index = j;
 					}
 				}
-			}else{//Explore and choose the policy with the smallest visit count
-				int temp = Integer.MAX_VALUE;
-				for (int i = 0; i < QVisitCount.length; i++) {
-					if (QVisitCount[i][currentCluster] < temp) {
-						temp = QVisitCount[i][currentCluster];
-						index = i;
-						if (temp == 0) break; // break because we did not visit this policy yet
-					}
-				}
+			}else{//Explore and choose a random action
+				double temp =  Math.random();
+				index = (int)(temp*policyCount);
 			}
 			// Extract the selected policy given the selection index
 			nextNSGreen = policies[index];
 			State nextState = Model.getNextState(model.currentState, nextNSGreen);
 			int nextCluster = getBestClusterIndex(nextState);
-			
+
 			double optimalNextValue = Double.NEGATIVE_INFINITY;
 			// Get the best Qvalue given the next state
 			for(int j = 0; j < QValues.length; j++){
@@ -100,18 +94,18 @@ public class Agent {
 			}
 			//Add the reward to the total reward and update average reward
 			totalReward += nextState.reward;				
-//			updateAvgReward(nextState.reward);
+			//			updateAvgReward(nextState.reward);
 			writer.write("" + nextState.reward + "\n");
-			
-			
+
+
 			//Update QValue for the current state
-	//		QVisitCount[index][currentCluster]++;
+			//		QVisitCount[index][currentCluster]++;
 			QValues[index][currentCluster] += BETA*(nextState.reward + GAMMA*optimalNextValue - QValues[index][currentCluster]);
 
 			//Update currentState and clusters
 			model.currentState = nextState;
 			Model.printState(model.currentState);
-			
+
 			System.out.println(""   + averageReward);
 			updateCluster(nextState, nextCluster);
 		}
@@ -168,17 +162,17 @@ public class Agent {
 				boolean[][] NSGreen = {{false, true} , {true, false}};
 				nextState = Model.getNextState(model.currentState, NSGreen);
 			}
-			
+
 			//Add the reward to the total reward
 			totalReward += nextState.reward;
-//			updateAvgReward(nextState.reward);
+			//			updateAvgReward(nextState.reward);
 			writer.write("" + nextState.reward + "\n");
 			//Update currentState
 			model.currentState = nextState;
 			Model.printState(model.currentState);
-	//		System.out.println(""   + averageReward);
+			//		System.out.println(""   + averageReward);
 		}
-		
+
 		System.out.println("=========================================");
 	}
 
@@ -224,7 +218,7 @@ public class Agent {
 		//	agent.testCentroidUpdate();
 		agent1.doQLearning();
 		agent2.doIntuitiveStrategy();
-	//	agent3.doRandomStrategy();
+		//	agent3.doRandomStrategy();
 		//	agent.testCentroidUpdate();
 		//	agent.doNaiveStrategy();
 
