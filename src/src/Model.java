@@ -103,7 +103,7 @@ public class Model {
 						}
 					}
 					carsPassed = carsTurned + carsFwd;
-					System.out.println("For (" + i + "," + j + ") is " + carsTurned + " cars turned EW, " + carsFwd + " went forward NS. " + carsPassed + " passed in total.");//TODO: remove this
+					//System.out.println("For (" + i + "," + j + ") is " + carsTurned + " cars turned EW, " + carsFwd + " went forward NS. " + carsPassed + " passed in total.");//TODO: remove this
 					newState.grid[i][j].NScars -= carsPassed; 
 				}else{
 					//Apply changes to adjacent intersection as fit/decrement state carCount
@@ -149,12 +149,12 @@ public class Model {
 						}
 					}
 					carsPassed = carsFwd + carsTurned;
-					System.out.println("For (" + i + "," + j + ") is " + carsTurned + " cars turned NS, " + carsFwd + " went forward EW. " + carsPassed + " passed in total.");//TODO: remove this//TODO: remove this
+					//System.out.println("For (" + i + "," + j + ") is " + carsTurned + " cars turned NS, " + carsFwd + " went forward EW. " + carsPassed + " passed in total.");//TODO: remove this//TODO: remove this
 					newState.grid[i][j].EWcars -= carsPassed;
 				}
 			}
 		}
-		System.out.println("Cars Cleared = " + carsCleared);
+		//System.out.println("Cars Cleared = " + carsCleared);
 		newState.reward = carsCleared;
 		// input cars into this next state and decrement reward by input failures
 		inputCars(newState); 
@@ -176,16 +176,16 @@ public class Model {
 					input = Math.min(MAX_CAR_STREET - s.grid[i][j].NScars, maxInput);
 					s.grid[i][j].NScars += input;
 					//decrement reward according to number of cars denied
-					s.reward -= maxInput - input;
-					System.out.println("cars in from NS (" + i + "," + j +") is " + input + " and reward was brought down by " + (maxInput - input));
+					s.reward -= (maxInput - input);
+					//System.out.println("cars in from NS (" + i + "," + j +") is " + input + " and reward was brought down by " + (maxInput - input));
 				}
 				if(s.grid[i][j].isEWInput){					
 					maxInput = (int)(Math.random()*MAX_CAR_IN + 2);
 					input = Math.min(MAX_CAR_STREET - s.grid[i][j].EWcars, maxInput);
 					s.grid[i][j].EWcars += input;
 					//decrement reward according to number of cars denied
-					s.reward -= maxInput - input;
-					System.out.println("cars in from EW (" + i + "," + j +") is " + input + " and reward was brought down by " + (maxInput - input));
+					s.reward -= (maxInput - input);
+					//System.out.println("cars in from EW (" + i + "," + j +") is " + input + " and reward was brought down by " + (maxInput - input));
 				}
 			}
 		}

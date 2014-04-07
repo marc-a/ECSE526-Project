@@ -10,6 +10,17 @@ public class State {
 		grid = new Intersection[width][height];
 	}
 	
+	public State(int width, int height, int[][][] numberOfCars) {
+		grid = new Intersection[width][height];
+		
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				grid[i][j] = new Intersection(i, j, numberOfCars[i][j][0], numberOfCars[i][j][1]);
+			}
+		}
+		
+	}
+	
 	/**
 	 * Used by getNextState method
 	 * @return a copy of the state
