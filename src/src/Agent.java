@@ -6,7 +6,7 @@ public class Agent {
 	int turn = 0, totalReward = 0;
 	double averageReward = 0;
 	final int CLUSTER_COUNT = 2000; // 6561 = 3^8
-	final int MAX_ITERATION = 10000;
+	final int MAX_ITERATION = 20000;
 	final int AVG_WINDOW_SIZE = 50;
 
 	int policyCount;
@@ -254,17 +254,17 @@ public class Agent {
 	public static void main(String[] args){
 		Agent agent1 = new Agent();
 		Agent agent2 = new Agent();
-		//Agent agent3 = new Agent();
+		Agent agent3 = new Agent();
 		//	agent.testCentroidUpdate();
 		agent2.doIntuitiveStrategy();
 		agent1.doQLearning();
-		//agent3.doRandomStrategy();
+		agent3.doRandomStrategy();
 		//	agent.testCentroidUpdate();
 		//	agent.doNaiveStrategy();
 
 		System.out.println("Total Q reward is " + agent1.totalReward);
 		System.out.println("Total intuitive reward is " + agent2.totalReward);
-		//System.out.println("Total random reward is " + agent3.totalReward);
+		System.out.println("Total random reward is " + agent3.totalReward);
 		
 		for (int i = 0; i < agent1.QVisitCount.length; i++) {
 			//System.out.println(Arrays.toString(agent1.QVisitCount[i]));

@@ -1,5 +1,8 @@
 package src;
 
+import org.apache.commons.math3.distribution.PoissonDistribution;
+import org.apache.commons.math3.distribution.PoissonDistributionTest;
+
 
 public class Model {
 	public State currentState;
@@ -168,24 +171,26 @@ public class Model {
 	 */
 	private static void inputCars(State s){
 		int inputCount = 0;
+		PoissonDistribution p1 = new PoissonDistribution((MAX_CAR_IN*3)/4);
+		PoissonDistribution p2 = new PoissonDistribution((MAX_CAR_IN*5)/6);
 		int input = 0, maxInput;
 		for(int i = 0; i < s.grid.length ; i ++){
 			for(int j = 0; j < s.grid[0].length ; j ++){
 				if(s.grid[i][j].isNSInput){					
-					maxInput =  (int)(Math.random()*(MAX_CAR_IN )); //TODO: refine this
+					maxInput =  Math.min(p1.sample(), MAX_CAR_IN); //TODO: refine this
 					input = Math.min(MAX_CAR_STREET - s.grid[i][j].NScars, maxInput);
 					s.grid[i][j].NScars += input;
 					//decrement reward according to number of cars denied
 					s.reward -= (maxInput - input);
-					//System.out.println("cars in from NS (" + i + "," + j +") is " + input + " and reward was brought down by " + (maxInput - input));
+					System.out.println("cars in from NS (" + i + "," + j +") is " + input + " and reward was brought down by " + (maxInput - input));
 				}
 				if(s.grid[i][j].isEWInput){					
-					maxInput = (int)(Math.random()*MAX_CAR_IN + 2);
+					maxInput =  Math.min(p2.sample(), MAX_CAR_IN);
 					input = Math.min(MAX_CAR_STREET - s.grid[i][j].EWcars, maxInput);
 					s.grid[i][j].EWcars += input;
 					//decrement reward according to number of cars denied
 					s.reward -= (maxInput - input);
-					//System.out.println("cars in from EW (" + i + "," + j +") is " + input + " and reward was brought down by " + (maxInput - input));
+					System.out.println("cars in from EW (" + i + "," + j +") is " + input + " and reward was brought down by " + (maxInput - input));
 				}
 			}
 		}
