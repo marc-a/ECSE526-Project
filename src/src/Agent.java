@@ -46,6 +46,7 @@ public class Agent {
 		this.policyCount = (int)Math.pow(2, width*height);
 
 		QValues = new double[policyCount][CLUSTER_COUNT];
+		QVisitCount = new int[policyCount][CLUSTER_COUNT];
 	}
 
 
@@ -75,9 +76,15 @@ public class Agent {
 						index = j;
 					}
 				}
-			}else{//Explore and choose a random action
-				double temp =  Math.random();
-				index = (int)(temp*policyCount);
+			}else{//Explore and choose the policy with the smallest visit count
+				int temp = Integer.MAX_VALUE;
+				for (int i = 0; i < QVisitCount.length; i++) {
+					if (QVisitCount[i][currentCluster] < temp) {
+						temp = QVisitCount[i][currentCluster];
+						index = i;
+						if (temp == 0) break; // break because we did not visit this policy yet
+					}
+				}
 			}
 			// Extract the selected policy given the selection index
 			nextNSGreen = policies[index];
